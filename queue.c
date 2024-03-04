@@ -194,12 +194,55 @@ void q_swap(struct list_head *head)
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return;
+    struct list_head *curr, *next;
+    list_for_each_safe (curr, next, head) {
+        curr->next = curr->prev;
+        curr->prev = next;
+    }
+
+    next = head->next;
+    head->next = head->prev;
+    head->prev = next;
+}
+
+struct list_head *reverse_seg(struct list_head *start, int k)
+{
+    struct list_head *end = start, *next, *prev;
+    for (int i = 1; i < k; i++) {
+        end = end->next;
+    }
+    next = end->next;
+    prev = start->prev;
+
+    end->next = start;
+    start->prev = end;
+    q_reverse(start);
+
+    end->prev = prev;
+    prev->next = end;
+    start->next = next;
+    next->prev = start;
+
+    return start;
+}
 
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
 {
     // https://leetcode.com/problems/reverse-nodes-in-k-group/
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    struct list_head *current = head->next;
+    int n = q_size(head);
+    while (n >= k) {
+        current = reverse_seg(current, k);
+        current = current->next;
+        n -= k;
+    }
 }
 
 /* Sort elements of queue in ascending/descending order */
@@ -217,7 +260,7 @@ int q_ascend(struct list_head *head)
     while (find_greater) {
         find_greater = false;
         list_for_each_entry_safe (element1, element2, head, list) {
-            if (strcmp(element1->value, element2->value) > 0) {
+            if (strcmp(element1->value, element2->value) >= 0) {
                 find_greater = true;
                 list_del(&element1->list);
                 break;
@@ -234,13 +277,13 @@ int q_descend(struct list_head *head)
     // https://leetcode.com/problems/remove-nodes-from-linked-list/
     if (!head || list_empty(head) || list_is_singular(head))
         return q_size(head);
-    bool find_greater = true;
+    bool find_smaller = true;
     element_t *element1, *element2;
-    while (find_greater) {
-        find_greater = false;
+    while (find_smaller) {
+        find_smaller = false;
         list_for_each_entry_safe (element1, element2, head, list) {
-            if (strcmp(element1->value, element2->value) < 0) {
-                find_greater = true;
+            if (strcmp(element1->value, element2->value) <= 0) {
+                find_smaller = true;
                 list_del(&element1->list);
                 break;
             }
