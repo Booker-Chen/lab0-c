@@ -308,6 +308,7 @@ int q_ascend(struct list_head *head)
             if (strcmp(element1->value, element2->value) >= 0) {
                 find_greater = true;
                 list_del(&element1->list);
+                q_release_element(element1);
                 break;
             }
         }
