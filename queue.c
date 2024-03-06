@@ -47,13 +47,13 @@ bool q_insert_head(struct list_head *head, char *s)
     }
     int n = strlen(s) + 1;
     element->value = malloc(n * sizeof(char));
-    if (!(element->value)) {
+    if (!element->value) {
         q_release_element(element);
         return false;
     }
     memcpy(element->value, s, n);
-    (element->value)[n - 1] = '\0';
 
+    (element->value)[n - 1] = '\0';
     list_add(&element->list, head);
     return true;
 }
@@ -70,7 +70,7 @@ bool q_insert_tail(struct list_head *head, char *s)
     }
     int n = strlen(s) + 1;
     element->value = malloc(n * sizeof(char));
-    if (!(element->value)) {
+    if (!element->value) {
         q_release_element(element);
         return false;
     }
@@ -303,6 +303,8 @@ int q_ascend(struct list_head *head)
     while (find_greater) {
         find_greater = false;
         list_for_each_entry_safe (element1, element2, head, list) {
+            if (&element2->list == head)
+                break;
             if (strcmp(element1->value, element2->value) >= 0) {
                 find_greater = true;
                 list_del(&element1->list);
@@ -325,9 +327,12 @@ int q_descend(struct list_head *head)
     while (find_smaller) {
         find_smaller = false;
         list_for_each_entry_safe (element1, element2, head, list) {
+            if (&element2->list == head)
+                break;
             if (strcmp(element1->value, element2->value) <= 0) {
                 find_smaller = true;
                 list_del(&element1->list);
+                q_release_element(element1);
                 break;
             }
         }
@@ -340,5 +345,16 @@ int q_descend(struct list_head *head)
 int q_merge(struct list_head *head, bool descend)
 {
     // https://leetcode.com/problems/merge-k-sorted-lists/
-    return 0;
+    if (!head || list_empty(head))
+        return 0;
+    queue_contex_t *contex = list_first_entry(head, queue_contex_t, chain),
+                   *curr = NULL;
+    list_for_each_entry (curr, head, chain) {
+        if (curr == contex)
+            continue;
+        contex->size += curr->size;
+        list_splice_tail_init(curr->q, contex->q);
+    }
+    q_sort(contex->q, descend);
+    return contex->size;
 }
